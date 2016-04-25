@@ -29,11 +29,11 @@ def panic(msg):
     help()
     sys.exit(2)
 
-def checkNumberOfArgs(argv, length, panicOnFalse = False):
-    if len(argv) - 2 != length:
+def checkNumberOfArgs(args, length, panicOnFalse = False):
+    if len(args) != length:
         if panicOnFalse:
-            panic("Command {} requires {} argument(s) ({} given).".format(
-                argv[1], length, len(argv) - 2
+            panic("Command requires {} argument(s) ({} given).".format(
+                length, len(args)
                 ))
         return False
     return True
