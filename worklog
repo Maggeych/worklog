@@ -1,0 +1,139 @@
+#!/bin/python
+import sqlite3, sys, errno, os, database, visualize, utils
+
+confFolder = "~/.worklog/"
+databaseFile = "database.db"
+
+def help(longDescription = False):
+    print("Usage: \t\033[1mworklog <name> [optional command]\033[0m")
+    print()
+    print("Commands:")
+    print("\tstart")
+    print("\tstop (<work notes>)")
+    print("\tlog | log <month>")
+    print("\tsum <month>")
+    print("\tadd <date> <start time> <stop time> <work notes>")
+    print("\tdelete <id number>")
+    print("\thelp")
+
+    if longDescription:
+        print()
+        print("Detailed commands:")
+        print("  \033[1mstart\033[0m")
+        print("      Starts the working ticket.")
+        print("  \033[1mstop (<work notes>)\033[0m")
+        print("      Stops the working ticket.")
+        print("      Use <work notes> to summarize the work (optional).")
+        print("  \033[1mlog | log <month>\033[0m")
+        print("      Show a detailed list for <month> (format: MM/YYYY).")
+        print("      Omitting <month> prints every record there is.")
+        print("  \033[1msum <month>\033[0m")
+        print("      Show a work summary for <month> (format: MM/YYYY).")
+        print("  \033[1madd <date> <start time> <stop time> <work notes>\033[0m")
+        print("      Create a work record with the given arguments.")
+        print("      Formatting:")
+        print("        <date>: DD.MM.YYYY")
+        print("        <start time> <stop time>: HH:MM")
+        print("  \033[1mdelete <id number>\033[0m")
+        print("      Delete the work record with the given <id number>.")
+        print("  \033[1mhelp\033[0m")
+        print("      Print this.")
+utils.help = help
+
+def start(db, argv):
+    utils.checkNumberOfArgs(argv, 0, True)
+    if db.startTicket() == False:
+        utils.panic("There already is an open work ticket.")
+    visualize.openTickets(db)
+
+def stop(db, argv):
+    notes = " ".join(argv[2:])
+    if db.stopTicket(notes) == False:
+        utils.panic("There is no open work ticket.")
+    else:
+        visualize.closedTickets(db, 1)
+
+def log(db, argv):
+    if utils.checkNumberOfArgs(argv, 0):
+        visualize.closedTickets(db, -1)
+    elif utils.checkNumberOfArgs(argv, 1, True):
+        if utils.checkIsInt(argv[2]):
+            visualize.closedTickets(db, int(argv[2]))
+        elif utils.checkIsStamp(argv[2]):
+            visualize.log(db, argv[2])
+        else:
+            utils.panic("Argument '{}' is neither an integer nor a month "
+                    "(format: MM/YYYY).".format(argv[2]))
+
+def sum(db, argv):
+    utils.checkNumberOfArgs(argv, 1, True)
+    utils.checkIsStamp(argv[2], True)
+    visualize.summary(db, argv[2])
+
+def add(db, argv):
+    if len(argv) < 5:
+        utils.panic("Not enough arguments.")
+    utils.checkIsDate(argv[2])
+    utils.checkIsTime(argv[3])
+    utils.checkIsTime(argv[4])
+    notes = " ".join(argv[5:])
+    visualize.data(argv[2], argv[3], argv[4], notes)
+    print()
+    if utils.question("Create the above work record?"):
+        db.createEntry(argv[2], argv[3], argv[4], notes)
+        print("Done:")
+        print()
+        visualize.lastInserted(db)
+        print()
+    else:
+        print("Aborted.")
+
+
+def delete(db, argv):
+    utils.checkNumberOfArgs(argv, 1, True)
+    utils.checkIsInt(argv[2], True)
+    id = argv[2]
+
+    print()
+    if visualize.ticket(db, id) == False:
+        utils.panic("There is no ticket #{}.".format(id))
+    print()
+    if utils.question("Really delete above ticket #{}?".format(id), "no"):
+        db.deleteEntry(id)
+        print("Deleted ticket #{}.".format(id))
+    else:
+        print("Aborted.")
+
+def run(db, argv):
+    action = argv[1]
+    funcs = {
+            "start": start,
+            "stop": stop,
+            "log": log,
+            "sum": sum,
+            "add": add,
+            "delete": delete,
+            }
+    if action in funcs:
+        funcs[action](db, argv)
+    else:
+        utils.panic("Unknown command: {}".format(action))
+
+def main(argv):
+    if len(argv) == 0:
+        help()
+    elif argv[0] == "help" or argv[0] == "-h":
+        help(longDescription = True)
+    else:
+        db = sqlite3.connect(utils.prepareFolder(confFolder) + databaseFile)
+        work = database.WorkTable(db.cursor(), argv[0])
+        if len(argv) == 1:
+            if visualize.openTickets(work) == False:
+                visualize.closedTickets(work, 8)
+        elif len(argv) > 1:
+            run(work, argv)  # TODO: Try/catch for argument errors.
+        db.commit()
+        db.close()
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
