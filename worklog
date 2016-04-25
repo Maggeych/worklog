@@ -1,5 +1,5 @@
 #!/bin/python
-import sqlite3, sys, errno, os, database, visualize, utils
+import sqlite3, sys, database, visualize, utils, action
 
 confFolder = "~/.worklog/"
 databaseFile = "database.db"
@@ -40,84 +40,20 @@ def help(longDescription = False):
         print("      Print this.")
 utils.help = help
 
-def start(db, argv):
-    utils.checkNumberOfArgs(argv, 0, True)
-    if db.startTicket() == False:
-        utils.panic("There already is an open work ticket.")
-    visualize.openTickets(db)
-
-def stop(db, argv):
-    notes = " ".join(argv[2:])
-    if db.stopTicket(notes) == False:
-        utils.panic("There is no open work ticket.")
-    else:
-        visualize.closedTickets(db, 1)
-
-def log(db, argv):
-    if utils.checkNumberOfArgs(argv, 0):
-        visualize.closedTickets(db, -1)
-    elif utils.checkNumberOfArgs(argv, 1, True):
-        if utils.checkIsInt(argv[2]):
-            visualize.closedTickets(db, int(argv[2]))
-        elif utils.checkIsStamp(argv[2]):
-            visualize.log(db, argv[2])
-        else:
-            utils.panic("Argument '{}' is neither an integer nor a month "
-                    "(format: MM/YYYY).".format(argv[2]))
-
-def sum(db, argv):
-    utils.checkNumberOfArgs(argv, 1, True)
-    utils.checkIsStamp(argv[2], True)
-    visualize.summary(db, argv[2])
-
-def add(db, argv):
-    if len(argv) < 5:
-        utils.panic("Not enough arguments.")
-    utils.checkIsDate(argv[2])
-    utils.checkIsTime(argv[3])
-    utils.checkIsTime(argv[4])
-    notes = " ".join(argv[5:])
-    visualize.data(argv[2], argv[3], argv[4], notes)
-    print()
-    if utils.question("Create the above work record?"):
-        db.createEntry(argv[2], argv[3], argv[4], notes)
-        print("Done:")
-        print()
-        visualize.lastInserted(db)
-        print()
-    else:
-        print("Aborted.")
-
-
-def delete(db, argv):
-    utils.checkNumberOfArgs(argv, 1, True)
-    utils.checkIsInt(argv[2], True)
-    id = argv[2]
-
-    print()
-    if visualize.ticket(db, id) == False:
-        utils.panic("There is no ticket #{}.".format(id))
-    print()
-    if utils.question("Really delete above ticket #{}?".format(id), "no"):
-        db.deleteEntry(id)
-        print("Deleted ticket #{}.".format(id))
-    else:
-        print("Aborted.")
-
 def run(db, argv):
-    action = argv[1]
+    cmd = argv[1]
     funcs = {
-            "start": start,
-            "stop": stop,
-            "log": log,
-            "sum": sum,
-            "add": add,
-            "delete": delete,
+            "start": action.start,
+            "stop": action.stop,
+            "log": action.log,
+            "sum": action.sum,
+            "add": action.add,
+            "delete": action.delete,
             }
-    if action in funcs:
-        funcs[action](db, argv)
+    if cmd in funcs:
+        funcs[cmd](db, argv[2:])
     else:
-        utils.panic("Unknown command: {}".format(action))
+        utils.panic("Unknown command: {}".format(cmd))
 
 def main(argv):
     if len(argv) == 0:
