@@ -14,7 +14,7 @@ List of commands:
 * `start` Starts the working ticket.
 * `stop (<work notes>)` Stops the working ticket. Use `<work notes>` to summarize the work (optional).  
 * `log (<month>)` Show a detailed list for `<month>` (format: _MM/YYYY_). Omitting `<month>` prints every record there is.  
-* `sum <month>` Show a work summary for `<month>` (format: _MM/YYYY_).
+* `sum <month>` Show a work summary for `<month>` (format: _MM/YYYY_). If `<month>` is not given the current month is used.
 * `add <date> <start time> <stop time> (<work notes>)` Create a work record with the given arguments.  
 `<date>` _DD.MM.YYYY_  
 `<start time>`, `<stop time>` _HH:MM_
