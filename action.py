@@ -26,9 +26,11 @@ def log(db, args):
                     "(format: MM/YYYY).".format(args[0]))
 
 def sum(db, args):
-    utils.checkNumberOfArgs(args, 1, True)
-    utils.checkIsStamp(args[0], True)
-    visualize.summary(db, args[0])
+    if utils.checkNumberOfArgs(args, 0):
+        visualize.summary(db, utils.getCurrentStamp())
+    elif utils.checkNumberOfArgs(args, 1, True):
+        utils.checkIsStamp(args[0], True)
+        visualize.summary(db, args[0])
 
 def add(db, args):
     if len(args) < 3:

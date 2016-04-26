@@ -1,4 +1,4 @@
-import sys, os, errno, re
+import sys, os, errno, re, datetime
 
 def question(question, default="yes"):
     valid = {"yes": True, "y": True, "ye": True,
@@ -64,6 +64,10 @@ def checkIsTime(s):
     timePattern = re.compile("^([0-1][0-9]|2[0-3]):[0-5][0-9]$")
     if timePattern.match(s) == None:
         panic("{} is not a valid time. Use 'HH:MM'.".format(s))
+
+def getCurrentStamp():
+    now = datetime.datetime.now()
+    return "{:02}/{}".format(now.month, now.year)
 
 def prepareFolder(name):
     folderExpanded = os.path.expanduser(name)
