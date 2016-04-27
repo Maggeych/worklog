@@ -30,7 +30,7 @@ def summary(workTable, stamp):
     for m in matches:
         print(" {}┊{}┊{}  \033[37m#{:0>3}\033[0m".format(m[1], m[2], m[3], m[0]))
     print(" ══════════════════════")
-    print("   \033[1mSUM {}:\033[0m {:.2}".format(stamp, s))
+    print("   \033[1mSUM {}:\033[0m {:.1f}".format(stamp, s))
     print(" ══════════════════════")
 
 # Print ticket with given id.
